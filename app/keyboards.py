@@ -23,6 +23,7 @@ async def inline_get_tasks(id, path):
         keyboard.add(InlineKeyboardButton(text='Удалить', callback_data=delit))
 
         upper_dir = path[:path.rfind('/', 0, path.rfind('/'))+1]
+        
         keyboard.add(InlineKeyboardButton(text='Назад', callback_data=upper_dir))
     else:
         keyboard.add(InlineKeyboardButton(text='Назад', callback_data='start'))

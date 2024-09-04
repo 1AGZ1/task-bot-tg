@@ -3,7 +3,7 @@ from app.path import CUR_DIR, check_file_exists
 
 
 async def getDataFromJson(id):
-    filePath = f'{CUR_DIR}\\json\\{id}.json'
+    filePath = f'{CUR_DIR}/json/{id}.json'
 
     if check_file_exists(filePath):
         with open(filePath, 'r') as file:
@@ -11,13 +11,13 @@ async def getDataFromJson(id):
     else:
         with open(filePath, 'w') as file:
             data = {}
-            print('meow',  data)
+            
             json.dump(data, file, indent=4)
 
     return data
 
 async def setDataToJson(id, data):
-    filePath = f'{CUR_DIR}\\json\\{id}.json'
+    filePath = f'{CUR_DIR}/json/{id}.json'
 
     with open(filePath, 'w') as file:
         json.dump(data, file, indent=4)

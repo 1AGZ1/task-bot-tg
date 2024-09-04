@@ -6,14 +6,9 @@ from aiogram.types import Message, CallbackQuery
 import app.keyboards as kb
 import app.taskManager as tm
 
-from aiogram.fsm.state import StatesGroup, State
 from aiogram.fsm.context import FSMContext
 
-class AddTask(StatesGroup):
-    id = State()
-    path = State()
-    name = State()
-    description = State()
+from app.fsm import AddTask
 
 
 router = Router()
@@ -21,14 +16,15 @@ router = Router()
 @router.message(CommandStart())
 async def cmd_start(message: Message):
     await message.answer(
-        "Привет!!",
+        "Выбери действие",
         reply_markup = await kb.inline_start()
     )
 
-@router.message(F.data == 'start')
-async def callback_start(message: Message):
-    await message.answer(
-        "Привет!!",
+@router.callback_query(F.data == 'start')
+async def callback_start(callback: CallbackQuery):
+    
+    await callback.message.edit_text(
+        "Выбери действие",
         reply_markup = await kb.inline_start()
     )
 
@@ -36,9 +32,8 @@ async def callback_start(message: Message):
 
 @router.callback_query(F.data.startswith('add'))
 async def task_add_first(callback: CallbackQuery, state: FSMContext):
-    id = callback.message.from_user.id
+    id = callback.from_user.id
 
-    print(callback.data)
     path = callback.data[3:]
 
     await state.update_data(id=id)
@@ -72,7 +67,10 @@ async def task_add_third(message: Message, state: FSMContext):
     await tm.addObjByPath(data['id'], obj, new_path)
 
     await message.answer(
-        "Привет!!",
+        f'''
+            Задача: {await tm.getNameByPath(data['id'], data['path'])}
+Описание: {await tm.getDescriptionByPath(data['id'], data['path'])}
+        ''',
         reply_markup = await kb.inline_get_tasks(
             data['id'],
             data['path']
@@ -83,7 +81,7 @@ async def task_add_third(message: Message, state: FSMContext):
 
 @router.callback_query(F.data.startswith('del'))
 async def task_del(callback: CallbackQuery):
-    id = callback.message.from_user.id
+    id = callback.from_user.id
     path = callback.data[3:]
 
     await tm.delObjByPath(id, path)
@@ -94,7 +92,7 @@ async def task_del(callback: CallbackQuery):
         await callback.message.edit_text(
             f'''
                 Задача: {await tm.getNameByPath(id, new_path)}
-                Описание: {await tm.getDescriptionByPath(id, new_path)}
+Описание: {await tm.getDescriptionByPath(id, new_path)}
             ''',
             reply_markup = await kb.inline_get_tasks(
                 id,
@@ -105,36 +103,45 @@ async def task_del(callback: CallbackQuery):
         await callback.message.edit_text(
             'Ваши задачи:',
             reply_markup = await kb.inline_get_tasks(
-                callback.message.from_user.id,
-                path
+                id,
+                new_path
             )
         )
 
 @router.callback_query(F.data.startswith('/'))
 async def task_get(callback: CallbackQuery):
-    id = callback.message.from_user.id
+    id = callback.from_user.id
     path = callback.data
 
-    await callback.message.edit_text(
-        f'''
-            Задача: {await tm.getNameByPath(id, path)}
-            Описание: {await tm.getDescriptionByPath(id, path)}
-        ''',
-        reply_markup = await kb.inline_get_tasks(
-            id,
-            path
+    if path != '/':
+        await callback.message.edit_text(
+            f'''
+                Задача: {await tm.getNameByPath(id, path)}
+Описание: {await tm.getDescriptionByPath(id, path)}
+            ''',
+            reply_markup = await kb.inline_get_tasks(
+                id,
+                path
+            )
         )
-    )
+    else:
+        await callback.message.edit_text(
+            'Ваши задачи:',
+            reply_markup = await kb.inline_get_tasks(
+                id,
+                path
+            )
+        )
 
 @router.callback_query(F.data == 'task')
 async def task_start(callback: CallbackQuery):
-    id = callback.message.from_user.id
+    id = callback.from_user.id
     path = '/'
 
     await callback.message.edit_text(
         'Ваши задачи:',
         reply_markup = await kb.inline_get_tasks(
-            callback.message.from_user.id,
+            id,
             path
         )
     )
